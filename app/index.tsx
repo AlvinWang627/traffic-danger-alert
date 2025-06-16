@@ -1,19 +1,32 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useLocation } from "../hooks/useLocation";
 
 export default function HomeScreen() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const router = useRouter();
+  const { latitude, longitude, errorMsg, loading } = useLocation();
+
+  useEffect(() => {
+    if (errorMsg) {
+      Alert.alert("定位錯誤", errorMsg);
+    }
+  }, [errorMsg]);
 
   const toggleMonitoring = () => {
+    if (!isMonitoring && !latitude && !longitude) {
+      Alert.alert("無法開始偵測", "請等待位置資訊載入完成");
+      return;
+    }
     setIsMonitoring(!isMonitoring);
   };
 
@@ -28,6 +41,12 @@ export default function HomeScreen() {
           <Text style={styles.statusText}>
             目前狀態：{isMonitoring ? "偵測中" : "已停止"}
           </Text>
+          {isMonitoring && latitude && longitude && (
+            <Text style={styles.locationText}>
+              位置：{latitude.toFixed(6)}, {longitude.toFixed(6)}
+            </Text>
+          )}
+          {loading && <Text style={styles.loadingText}>正在獲取位置...</Text>}
         </View>
 
         <TouchableOpacity
@@ -36,6 +55,7 @@ export default function HomeScreen() {
             isMonitoring ? styles.stopButton : styles.startButton,
           ]}
           onPress={toggleMonitoring}
+          disabled={loading}
         >
           <Text style={styles.buttonText}>
             {isMonitoring ? "停止偵測" : "開始偵測"}
@@ -79,6 +99,17 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 16,
+    marginBottom: 10,
+  },
+  locationText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#2196F3",
+    marginTop: 5,
   },
   button: {
     width: "100%",
