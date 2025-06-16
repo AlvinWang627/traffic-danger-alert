@@ -1,50 +1,88 @@
-# Welcome to your Expo app 👋
+# 交通危險警示 App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+這是一個使用 React Native Expo (TypeScript) 開發的交通危險警示 App，可以即時監測使用者位置是否接近已知的危險路段，並提供警示。
 
-## Get started
+## 功能特點
 
-1. Install dependencies
+- 即時位置追蹤
+- 危險路段警示
+- 背景運作支援
+- 自定義警示距離
+- 震動和聲音提醒
 
-   ```bash
-   npm install
-   ```
+## 技術規格
 
-2. Start the app
+- 框架：React Native Expo
+- 語言：TypeScript
+- 目標平台：Android
+- 發布目標：Google Play Store
 
-   ```bash
-   npx expo start
-   ```
+## 開發環境需求
 
-In the output, you'll find options to open the app in a
+- Node.js (v14 或更新版本)
+- npm 或 yarn
+- Expo CLI
+- Android Studio
+- Android SDK
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 安裝步驟
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. 克隆專案
 ```bash
-npm run reset-project
+git clone [repository-url]
+cd traffic-danger-alert
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. 安裝依賴
+```bash
+npm install
+# 或
+yarn install
+```
 
-## Learn more
+3. 啟動開發伺服器
+```bash
+npm start
+# 或
+yarn start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## 專案結構
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+├── components/         # UI 元件
+├── screens/           # 畫面
+├── services/          # 服務層
+├── utils/             # 工具函數
+├── types/             # TypeScript 型別定義
+├── constants/         # 常數定義
+└── assets/            # 靜態資源
+```
 
-## Join the community
+## 使用說明
 
-Join our community of developers creating universal apps.
+1. 開啟 App
+2. 授予位置權限
+3. 點擊「開始偵測」按鈕
+4. 當接近危險路段時，App 會發出震動和聲音提醒
+5. 抵達目的地後，點擊「完成」按鈕停止偵測
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 設定選項
+
+- 警示距離：可調整警示觸發的距離（預設 100 公尺）
+- 震動提醒：開啟/關閉震動功能
+- 聲音提醒：開啟/關閉聲音提醒
+- 背景運作：設定是否在背景持續運作
+
+## 開發者文件
+
+詳細的開發文件請參考 `docs/design.md`。
+
+## 授權
+
+[授權資訊]
+
+## 聯絡方式
+
+[聯絡資訊]
