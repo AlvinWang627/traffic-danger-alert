@@ -1,4 +1,3 @@
-import { LocationObject } from "expo-location";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
@@ -8,17 +7,18 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  Vibration,
   View,
 } from "react-native";
+import { useAlerts } from "../hooks/useAlerts";
 import { useLocation } from "../hooks/useLocation";
-import { DangerSpotService } from "../src/services/DangerSpotService";
 
 export default function HomeScreen() {
   const [isMonitoring, setIsMonitoring] = useState(false);
-  const [nearbySpots, setNearbySpots] = useState<any[]>([]);
   const router = useRouter();
-  const { latitude, longitude, errorMsg, loading, location } = useLocation();
+  const { latitude, longitude, errorMsg, loading } = useLocation({
+    enabled: isMonitoring,
+  });
+  const { nearbySpotsCount } = useAlerts({ enabled: isMonitoring });
 
   useEffect(() => {
     if (errorMsg) {
@@ -26,44 +26,9 @@ export default function HomeScreen() {
     }
   }, [errorMsg]);
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (isMonitoring && location) {
-      // 立即檢查一次
-      checkDangerSpots(location);
-
-      // 設定定期檢查（每 10 秒）
-      intervalId = setInterval(() => {
-        checkDangerSpots(location);
-      }, 10000);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isMonitoring, location]);
-
-  const checkDangerSpots = (currentLocation: LocationObject) => {
-    const spots = DangerSpotService.checkNearbyDangerSpots(currentLocation);
-    if (spots.length > 0) {
-      setNearbySpots(spots);
-      // 觸發震動提醒
-      Vibration.vibrate([0, 500, 200, 500]);
-      Alert.alert(
-        "危險警示",
-        `您正在接近 ${spots.length} 個危險路段，請小心駕駛！`
-      );
-    } else {
-      setNearbySpots([]);
-    }
-  };
-
   const toggleMonitoring = () => {
-    if (!isMonitoring && !latitude && !longitude) {
-      Alert.alert("無法開始偵測", "請等待位置資訊載入完成");
+    if (!isMonitoring && loading) {
+      Alert.alert("無法開始偵測", "正在等待位置資訊，請稍候...");
       return;
     }
     setIsMonitoring(!isMonitoring);
@@ -86,10 +51,10 @@ export default function HomeScreen() {
             </Text>
           )}
           {loading && <Text style={styles.loadingText}>正在獲取位置...</Text>}
-          {nearbySpots.length > 0 && (
+          {isMonitoring && nearbySpotsCount > 0 && (
             <View style={styles.warningContainer}>
               <Text style={styles.warningText}>
-                警告：附近有 {nearbySpots.length} 個危險路段！
+                警告：附近有 {nearbySpotsCount} 個危險路段！
               </Text>
             </View>
           )}
@@ -101,7 +66,7 @@ export default function HomeScreen() {
             isMonitoring ? styles.stopButton : styles.startButton,
           ]}
           onPress={toggleMonitoring}
-          disabled={loading}
+          disabled={loading && !isMonitoring}
         >
           <Text style={styles.buttonText}>
             {isMonitoring ? "停止偵測" : "開始偵測"}

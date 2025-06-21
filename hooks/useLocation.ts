@@ -10,17 +10,28 @@ interface LocationState {
   location: LocationObject | null;
 }
 
-export const useLocation = () => {
+export const useLocation = ({ enabled }: { enabled: boolean }) => {
   const [state, setState] = useState<LocationState>({
     latitude: null,
     longitude: null,
     errorMsg: null,
-    loading: true,
+    loading: enabled,
     location: null,
   });
 
   useEffect(() => {
-    (async () => {
+    if (!enabled) {
+      setState({
+        latitude: null,
+        longitude: null,
+        errorMsg: null,
+        loading: false,
+        location: null,
+      });
+      return;
+    }
+
+    const getLocation = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
@@ -50,8 +61,10 @@ export const useLocation = () => {
           loading: false,
         }));
       }
-    })();
-  }, []);
+    };
+
+    getLocation();
+  }, [enabled]);
 
   return state;
 };

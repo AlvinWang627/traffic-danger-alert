@@ -1,14 +1,16 @@
 import { LocationObject } from "expo-location";
 import accidentData from "../../assets/accident_hotspots_grouped/113/taipei.json";
 
-interface AccidentSpot {
+export interface DangerSpot {
+  id: number;
+  name: string;
   latitude: number;
   longitude: number;
-  count: number;
+  accidentCount: number;
 }
 
 export class DangerSpotService {
-  private static readonly DANGER_RADIUS_METERS = 100; // 預設危險半徑為 100 公尺
+  private static DANGER_RADIUS_METERS = 100; // 預設危險半徑為 100 公尺
 
   /**
    * 計算兩點之間的距離（使用 Haversine 公式）
@@ -38,8 +40,8 @@ export class DangerSpotService {
    */
   public static checkNearbyDangerSpots(
     userLocation: LocationObject
-  ): AccidentSpot[] {
-    const nearbySpots: AccidentSpot[] = [];
+  ): DangerSpot[] {
+    const nearbySpots: DangerSpot[] = [];
 
     for (const spot of accidentData) {
       const distance = this.calculateDistance(
@@ -55,6 +57,13 @@ export class DangerSpotService {
     }
 
     return nearbySpots;
+  }
+
+  /**
+   * 取得所有危險地點
+   */
+  public static getDangerSpots(): Promise<DangerSpot[]> {
+    return Promise.resolve(accidentData);
   }
 
   /**
