@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Audio } from "expo-av";
+import { createAudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -18,7 +18,9 @@ export function useAlerts({ enabled }: { enabled: boolean }) {
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [nearbySpotsCount, setNearbySpotsCount] = useState(0);
   const lastAlertTimestamp = useRef<number>(0);
-  const sound = useRef(new Audio.Sound());
+  const audioPlayer = useRef(
+    createAudioPlayer(require("../assets/sounds/alert.mp3"))
+  );
 
   useEffect(() => {
     // Load settings from AsyncStorage
@@ -53,27 +55,6 @@ export function useAlerts({ enabled }: { enabled: boolean }) {
   }, [enabled]);
 
   useEffect(() => {
-    const loadSound = async () => {
-      try {
-        const { sound: soundObject } = await Audio.Sound.createAsync(
-          require("../assets/sounds/alert.mp3")
-        );
-        sound.current = soundObject;
-      } catch (error) {
-        console.log("error loading sound", error);
-      }
-    };
-
-    if (enabled && isSoundEnabled) {
-      loadSound();
-    }
-
-    return () => {
-      sound.current.unloadAsync();
-    };
-  }, [enabled, isSoundEnabled]);
-
-  useEffect(() => {
     if (!enabled || !location) {
       return;
     }
@@ -106,7 +87,7 @@ export function useAlerts({ enabled }: { enabled: boolean }) {
 
       // Play sound if enabled
       if (isSoundEnabled) {
-        sound.current.replayAsync().catch((error) => console.log(error));
+        audioPlayer.current.play();
       }
 
       lastAlertTimestamp.current = now;
