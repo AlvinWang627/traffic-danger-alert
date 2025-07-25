@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { PerformanceMonitor } from "../components/PerformanceMonitor";
 import { useAlerts } from "../hooks/useAlerts";
 import { useBackgroundService } from "../hooks/useBackgroundService";
 import { useLocation } from "../hooks/useLocation";
@@ -16,9 +17,13 @@ import { useLocation } from "../hooks/useLocation";
 export default function HomeScreen() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const router = useRouter();
+
   const { latitude, longitude, errorMsg, loading } = useLocation({
     enabled: isMonitoring,
+    updateInterval: 10000, // 10秒
+    backgroundUpdateInterval: 30000, // 30秒
   });
+
   const { nearbySpotsCount } = useAlerts({ enabled: isMonitoring });
   const { status: backgroundStatus } = useBackgroundService();
 
@@ -81,6 +86,15 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        <PerformanceMonitor showDetails={false} />
+
+        <TouchableOpacity
+          style={styles.detailsButton}
+          onPress={() => router.push("/performance-details")}
+        >
+          <Text style={styles.detailsButtonText}>查看詳細效能資訊</Text>
+        </TouchableOpacity>
 
         <View style={styles.backgroundStatusContainer}>
           <Text style={styles.backgroundStatusLabel}>背景運作：</Text>
@@ -205,10 +219,28 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   settingsButton: {
-    padding: 15,
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#2196F3",
   },
   settingsButtonText: {
-    color: "#2196F3",
+    color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  detailsButton: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#2196F3",
+    marginBottom: 15,
+  },
+  detailsButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

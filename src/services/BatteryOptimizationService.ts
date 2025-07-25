@@ -1,22 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import { AppState } from "react-native";
 
 export interface BatteryOptimizationSettings {
   enableBatteryOptimization: boolean;
-  locationUpdateInterval: number; // 毫秒
+  foregroundUpdateInterval: number; // 前景更新間隔，毫秒
+  backgroundUpdateInterval: number; // 背景更新間隔，毫秒
   distanceThreshold: number; // 公尺
   enableAdaptiveAccuracy: boolean;
   enableMotionDetection: boolean;
+  enableNightMode: boolean; // 夜間模式
+  nightModeStartHour: number; // 夜間模式開始時間
+  nightModeEndHour: number; // 夜間模式結束時間
 }
 
 export class BatteryOptimizationService {
   private static instance: BatteryOptimizationService;
   private defaultSettings: BatteryOptimizationSettings = {
     enableBatteryOptimization: true,
-    locationUpdateInterval: 5 * 60 * 1000, // 5分鐘
+    foregroundUpdateInterval: 10000, // 10秒
+    backgroundUpdateInterval: 30000, // 30秒
     distanceThreshold: 100, // 100公尺
     enableAdaptiveAccuracy: true,
     enableMotionDetection: true,
+    enableNightMode: true,
+    nightModeStartHour: 22, // 22:00
+    nightModeEndHour: 6, // 06:00
   };
 
   static getInstance(): BatteryOptimizationService {
@@ -59,7 +68,7 @@ export class BatteryOptimizationService {
   getOptimizedLocationOptions(): Location.LocationTaskOptions {
     return {
       accuracy: Location.Accuracy.Balanced,
-      timeInterval: 5 * 60 * 1000, // 5分鐘
+      timeInterval: 30000, // 30秒
       distanceInterval: 100, // 100公尺
       foregroundService: {
         notificationTitle: "交通危險警報",
@@ -73,7 +82,7 @@ export class BatteryOptimizationService {
   getHighAccuracyLocationOptions(): Location.LocationTaskOptions {
     return {
       accuracy: Location.Accuracy.High,
-      timeInterval: 2 * 60 * 1000, // 2分鐘
+      timeInterval: 10000, // 10秒
       distanceInterval: 50, // 50公尺
       foregroundService: {
         notificationTitle: "交通危險警報",
@@ -91,7 +100,7 @@ export class BatteryOptimizationService {
         return false;
       }
 
-      // 檢查是否在移動中（簡單的啟發式方法）
+      // 檢查是否在移動中
       const lastLocation = await AsyncStorage.getItem("lastKnownLocation");
       if (lastLocation) {
         const locationData = JSON.parse(lastLocation);
@@ -119,6 +128,8 @@ export class BatteryOptimizationService {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         timestamp: Date.now(),
+        speed: location.coords.speed || 0,
+        heading: location.coords.heading || 0,
       };
       await AsyncStorage.setItem(
         "lastKnownLocation",
@@ -133,6 +144,8 @@ export class BatteryOptimizationService {
     latitude: number;
     longitude: number;
     timestamp: number;
+    speed: number;
+    heading: number;
   } | null> {
     try {
       const locationData = await AsyncStorage.getItem("lastKnownLocation");
@@ -150,23 +163,58 @@ export class BatteryOptimizationService {
     try {
       const settings = await this.getSettings();
       if (!settings.enableBatteryOptimization) {
-        return settings.locationUpdateInterval;
+        return settings.foregroundUpdateInterval;
       }
 
-      // 根據時間和活動模式調整更新間隔
-      const now = new Date();
-      const hour = now.getHours();
+      const appState = AppState.currentState;
+      let baseInterval =
+        appState === "active"
+          ? settings.foregroundUpdateInterval
+          : settings.backgroundUpdateInterval;
 
-      // 夜間（22:00-06:00）減少更新頻率
-      if (hour >= 22 || hour < 6) {
-        return Math.max(settings.locationUpdateInterval * 2, 10 * 60 * 1000); // 至少10分鐘
+      // 夜間模式檢查
+      if (settings.enableNightMode && this.isNightTime(settings)) {
+        baseInterval = Math.max(baseInterval * 2, 60 * 1000); // 至少1分鐘
       }
 
-      // 白天正常頻率
-      return settings.locationUpdateInterval;
+      // 根據移動狀態調整
+      const lastLocation = await this.getLastKnownLocation();
+      if (lastLocation) {
+        const timeSinceLastUpdate = Date.now() - lastLocation.timestamp;
+
+        // 如果靜止不動，增加間隔
+        if (lastLocation.speed < 1) {
+          // 速度小於1 m/s
+          baseInterval = Math.max(baseInterval * 1.5, 30 * 1000);
+        }
+
+        // 如果最近有更新，可能正在移動，保持較短間隔
+        if (timeSinceLastUpdate < 2 * 60 * 1000) {
+          baseInterval = Math.min(baseInterval, 20 * 1000);
+        }
+      }
+
+      return Math.round(baseInterval);
     } catch (error) {
       console.error("計算最佳更新間隔失敗:", error);
-      return 5 * 60 * 1000; // 預設5分鐘
+      return 30000; // 預設30秒
+    }
+  }
+
+  private isNightTime(settings: BatteryOptimizationSettings): boolean {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (settings.nightModeStartHour > settings.nightModeEndHour) {
+      // 跨夜情況 (例如 22:00 - 06:00)
+      return (
+        hour >= settings.nightModeStartHour || hour < settings.nightModeEndHour
+      );
+    } else {
+      // 同一天內 (例如 06:00 - 22:00)
+      return (
+        hour >= settings.nightModeStartHour && hour < settings.nightModeEndHour
+      );
     }
   }
 
@@ -185,8 +233,12 @@ export class BatteryOptimizationService {
 
       const timeSinceLastUpdate = Date.now() - lastLocation.timestamp;
 
-      // 如果最近有位置更新，可能正在移動，應該發送通知
-      return timeSinceLastUpdate < 10 * 60 * 1000; // 10分鐘內
+      // 如果最近有位置更新且速度大於0，可能正在移動
+      if (timeSinceLastUpdate < 10 * 60 * 1000 && lastLocation.speed > 0.5) {
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error("檢查是否發送通知失敗:", error);
       return true;
@@ -195,11 +247,73 @@ export class BatteryOptimizationService {
 
   getBatteryOptimizationTips(): string[] {
     return [
-      "啟用電池優化可減少背景位置更新的頻率",
-      "在夜間自動減少位置更新頻率以節省電池",
+      "前景運作時每10秒更新位置，背景運作時每30秒更新",
+      "啟用電池優化可根據時間和移動狀態自動調整更新頻率",
+      "夜間模式（22:00-06:00）自動降低更新頻率以節省電池",
+      "靜止不動時自動增加更新間隔",
       "使用平衡精度而非高精度可大幅節省電池",
-      "只在移動時發送通知可減少不必要的警報",
-      "建議在充電時啟用高精度模式",
+      "背景運作時使用較長的更新間隔以減少電力消耗",
     ];
+  }
+
+  async getPerformanceStats(): Promise<{
+    totalLocationUpdates: number;
+    averageUpdateInterval: number;
+    batteryOptimizationEnabled: boolean;
+    currentUpdateInterval: number;
+  }> {
+    try {
+      const settings = await this.getSettings();
+      const currentInterval = await this.calculateOptimalUpdateInterval();
+
+      const statsStr = await AsyncStorage.getItem("locationUpdateStats");
+      const stats = statsStr
+        ? JSON.parse(statsStr)
+        : {
+            totalUpdates: 0,
+            totalTime: 0,
+            lastUpdate: Date.now(),
+          };
+
+      return {
+        totalLocationUpdates: stats.totalUpdates || 0,
+        averageUpdateInterval:
+          stats.totalTime > 0 ? stats.totalTime / stats.totalUpdates : 0,
+        batteryOptimizationEnabled: settings.enableBatteryOptimization,
+        currentUpdateInterval: currentInterval,
+      };
+    } catch (error) {
+      console.error("獲取效能統計失敗:", error);
+      return {
+        totalLocationUpdates: 0,
+        averageUpdateInterval: 0,
+        batteryOptimizationEnabled: true,
+        currentUpdateInterval: 30000,
+      };
+    }
+  }
+
+  async recordLocationUpdate(): Promise<void> {
+    try {
+      const statsStr = await AsyncStorage.getItem("locationUpdateStats");
+      const stats = statsStr
+        ? JSON.parse(statsStr)
+        : {
+            totalUpdates: 0,
+            totalTime: 0,
+            lastUpdate: Date.now(),
+          };
+
+      const now = Date.now();
+      const timeSinceLastUpdate = now - stats.lastUpdate;
+
+      stats.totalUpdates += 1;
+      stats.totalTime += timeSinceLastUpdate;
+      stats.lastUpdate = now;
+
+      await AsyncStorage.setItem("locationUpdateStats", JSON.stringify(stats));
+    } catch (error) {
+      console.error("記錄位置更新統計失敗:", error);
+    }
   }
 }

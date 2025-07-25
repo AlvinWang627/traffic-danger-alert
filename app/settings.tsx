@@ -5,7 +5,10 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -107,81 +110,104 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
 
-      <View style={styles.content}>
-        <Text style={styles.title}>設定</Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          bounces={false}
+          nestedScrollEnabled={false}
+          scrollEnabled={true}
+          alwaysBounceVertical={false}
+        >
+          <Text style={styles.title}>設定</Text>
 
-        <View style={styles.settingContainer}>
-          <Text style={styles.settingLabel}>警示距離</Text>
-          <Text style={styles.settingValue}>{alertDistance} 公尺</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={50}
-            maximumValue={500}
-            step={10}
-            value={alertDistance}
-            onValueChange={handleDistanceChange}
-            minimumTrackTintColor="#2196F3"
-            maximumTrackTintColor="#000000"
-          />
-        </View>
-
-        <View style={styles.settingContainer}>
-          <View style={styles.switchRow}>
-            <Text style={styles.settingLabel}>聲音提醒</Text>
-            <Switch
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-              thumbColor={isSoundEnabled ? "#2196F3" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={handleSoundToggle}
-              value={isSoundEnabled}
+          <View style={styles.settingContainer}>
+            <Text style={styles.settingLabel}>警示距離</Text>
+            <Text style={styles.settingValue}>{alertDistance} 公尺</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={50}
+              maximumValue={500}
+              step={10}
+              value={alertDistance}
+              onValueChange={handleDistanceChange}
+              minimumTrackTintColor="#2196F3"
+              maximumTrackTintColor="#000000"
             />
           </View>
-        </View>
 
-        <View style={styles.settingContainer}>
-          <View style={styles.switchRow}>
-            <View style={styles.backgroundSettingContainer}>
-              <Text style={styles.settingLabel}>背景運作</Text>
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: getBackgroundStatusColor() },
-                ]}
-              >
-                {getBackgroundStatusText()}
-              </Text>
+          <View style={styles.settingContainer}>
+            <View style={styles.switchRow}>
+              <Text style={styles.settingLabel}>聲音提醒</Text>
+              <Switch
+                trackColor={{ false: "#767577", true: "#81b0ff" }}
+                thumbColor={isSoundEnabled ? "#2196F3" : "#f4f3f4"}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={handleSoundToggle}
+                value={isSoundEnabled}
+              />
             </View>
-            <Switch
-              trackColor={{ false: "#767577", true: "#81b0ff" }}
-              thumbColor={status.isEnabled ? "#2196F3" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={handleBackgroundToggle}
-              value={status.isEnabled}
-              disabled={status.isLoading}
-            />
           </View>
-          <Text style={styles.settingDescription}>
-            啟用後，應用程式將在背景持續監控危險路段，即使螢幕關閉也會發送通知。
-          </Text>
-        </View>
 
-        <TouchableOpacity
-          style={styles.optimizationButton}
-          onPress={() => router.push("/battery-optimization")}
-        >
-          <Text style={styles.optimizationButtonText}>電池優化設定</Text>
-          <Text style={styles.optimizationButtonSubtext}>
-            調整背景運作的電池使用效率
-          </Text>
-        </TouchableOpacity>
+          <View style={styles.settingContainer}>
+            <View style={styles.switchRow}>
+              <View style={styles.backgroundSettingContainer}>
+                <Text style={styles.settingLabel}>背景運作</Text>
+                <Text
+                  style={[
+                    styles.statusText,
+                    { color: getBackgroundStatusColor() },
+                  ]}
+                >
+                  {getBackgroundStatusText()}
+                </Text>
+              </View>
+              <Switch
+                trackColor={{ false: "#767577", true: "#81b0ff" }}
+                thumbColor={status.isEnabled ? "#2196F3" : "#f4f3f4"}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={handleBackgroundToggle}
+                value={status.isEnabled}
+                disabled={status.isLoading}
+              />
+            </View>
+            <Text style={styles.settingDescription}>
+              啟用後，應用程式將在背景持續監控危險路段，即使螢幕關閉也會發送通知。
+            </Text>
+          </View>
 
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>返回</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.optimizationButton}
+            onPress={() => router.push("/battery-optimization")}
+          >
+            <Text style={styles.optimizationButtonText}>電池優化設定</Text>
+            <Text style={styles.optimizationButtonSubtext}>
+              調整背景運作的電池使用效率
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.optimizationButton}
+            onPress={() => router.push("/performance-settings")}
+          >
+            <Text style={styles.optimizationButtonText}>效能設定</Text>
+            <Text style={styles.optimizationButtonSubtext}>
+              調整位置更新頻率和效能參數
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>返回</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -191,9 +217,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 100, // 增加更多底部間距確保返回按鈕完全可見
+    minHeight: 800, // 設定最小高度確保可以滾動
   },
   title: {
     fontSize: 24,
@@ -258,14 +288,18 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: "#2196F3",
-    padding: 15,
+    padding: 20,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: "auto",
+    marginTop: 30,
+    marginBottom: 20,
   },
   backButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
 });

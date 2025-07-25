@@ -196,61 +196,39 @@ export class BackgroundService {
     location: Location.LocationObject
   ): Promise<void> {
     try {
+      // 記錄位置更新統計
+      await this.batteryOptimizationService.recordLocationUpdate();
+
       // 獲取設定
       const alertDistanceStr = await AsyncStorage.getItem("alertDistance");
-      const isSoundEnabledStr = await AsyncStorage.getItem("isSoundEnabled");
-      const isBackgroundEnabledStr = await AsyncStorage.getItem(
-        "isBackgroundEnabled"
+      const alertDistance = alertDistanceStr ? parseInt(alertDistanceStr) : 200;
+
+      // 檢查是否應該發送通知
+      const shouldSend =
+        await this.batteryOptimizationService.shouldSendNotification();
+      if (!shouldSend) {
+        console.log("根據移動狀態，跳過通知發送");
+        return;
+      }
+
+      // 獲取危險路段資料
+      const dangerSpotService = DangerSpotService.getInstance();
+      const nearbySpots = await dangerSpotService.getNearbyDangerSpots(
+        location.coords.latitude,
+        location.coords.longitude,
+        alertDistance
       );
 
-      const alertDistance = alertDistanceStr
-        ? JSON.parse(alertDistanceStr)
-        : 100;
-      const isBackgroundEnabled = isBackgroundEnabledStr
-        ? JSON.parse(isBackgroundEnabledStr)
-        : false;
-
-      if (!isBackgroundEnabled) {
-        return;
-      }
-
-      // 檢查是否應該發送通知（電池優化）
-      const shouldSendNotification =
-        await this.batteryOptimizationService.shouldSendNotification();
-      if (!shouldSendNotification) {
-        console.log("電池優化：跳過通知發送");
-        return;
-      }
-
-      // 獲取危險路段
-      const dangerSpots = await DangerSpotService.getDangerSpots();
-      const now = Date.now();
-      let nearbySpots: DangerSpot[] = [];
-
-      // 檢查附近的危險路段
-      for (const spot of dangerSpots) {
-        const distance = calculateDistance(
-          location.coords.latitude,
-          location.coords.longitude,
-          spot.latitude,
-          spot.longitude
-        );
-
-        if (distance < alertDistance) {
-          nearbySpots.push(spot);
+      if (nearbySpots.length > 0) {
+        // 檢查警報間隔
+        const now = Date.now();
+        if (now - this.lastAlertTime > this.ALERT_INTERVAL) {
+          await this.sendNotification(nearbySpots, location);
+          this.lastAlertTime = now;
         }
       }
-
-      // 如果有附近的危險路段且超過警報間隔時間
-      if (
-        nearbySpots.length > 0 &&
-        now - this.lastAlertTime >= this.ALERT_INTERVAL
-      ) {
-        await this.sendNotification(nearbySpots, location);
-        this.lastAlertTime = now;
-      }
     } catch (error) {
-      console.error("檢查危險路段時發生錯誤:", error);
+      console.error("檢查危險路段失敗:", error);
     }
   }
 
