@@ -181,26 +181,6 @@ export default function SettingsScreen() {
           </View>
 
           <TouchableOpacity
-            style={styles.optimizationButton}
-            onPress={() => router.push("/battery-optimization")}
-          >
-            <Text style={styles.optimizationButtonText}>電池優化設定</Text>
-            <Text style={styles.optimizationButtonSubtext}>
-              調整背景運作的電池使用效率
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optimizationButton}
-            onPress={() => router.push("/performance-settings")}
-          >
-            <Text style={styles.optimizationButtonText}>效能設定</Text>
-            <Text style={styles.optimizationButtonSubtext}>
-              調整位置更新頻率和效能參數
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
@@ -267,24 +247,6 @@ const styles = StyleSheet.create({
   slider: {
     width: "100%",
     height: 40,
-  },
-  optimizationButton: {
-    backgroundColor: "#4CAF50",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  optimizationButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  optimizationButtonSubtext: {
-    color: "#fff",
-    fontSize: 12,
-    marginTop: 5,
-    opacity: 0.8,
   },
   backButton: {
     backgroundColor: "#2196F3",

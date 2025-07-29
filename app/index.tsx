@@ -9,9 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { PerformanceMonitor } from "../components/PerformanceMonitor";
 import { useAlerts } from "../hooks/useAlerts";
-import { useBackgroundService } from "../hooks/useBackgroundService";
 import { useLocation } from "../hooks/useLocation";
 
 export default function HomeScreen() {
@@ -25,7 +23,6 @@ export default function HomeScreen() {
   });
 
   const { nearbySpotsCount } = useAlerts({ enabled: isMonitoring });
-  const { status: backgroundStatus } = useBackgroundService();
 
   useEffect(() => {
     if (errorMsg) {
@@ -39,26 +36,6 @@ export default function HomeScreen() {
       return;
     }
     setIsMonitoring(!isMonitoring);
-  };
-
-  const getBackgroundStatusText = () => {
-    if (backgroundStatus.isLoading) return "載入中...";
-    if (backgroundStatus.isEnabled) {
-      if (backgroundStatus.locationTask) {
-        return "背景監控中";
-      } else {
-        return "背景已啟用";
-      }
-    }
-    return "背景已停用";
-  };
-
-  const getBackgroundStatusColor = () => {
-    if (backgroundStatus.isLoading) return "#999";
-    if (backgroundStatus.isEnabled && backgroundStatus.locationTask)
-      return "#4CAF50";
-    if (backgroundStatus.isEnabled) return "#FF9800";
-    return "#F44336";
   };
 
   return (
@@ -85,27 +62,6 @@ export default function HomeScreen() {
               </Text>
             </View>
           )}
-        </View>
-
-        <PerformanceMonitor showDetails={false} />
-
-        <TouchableOpacity
-          style={styles.detailsButton}
-          onPress={() => router.push("/performance-details")}
-        >
-          <Text style={styles.detailsButtonText}>查看詳細效能資訊</Text>
-        </TouchableOpacity>
-
-        <View style={styles.backgroundStatusContainer}>
-          <Text style={styles.backgroundStatusLabel}>背景運作：</Text>
-          <Text
-            style={[
-              styles.backgroundStatusText,
-              { color: getBackgroundStatusColor() },
-            ]}
-          >
-            {getBackgroundStatusText()}
-          </Text>
         </View>
 
         <TouchableOpacity
@@ -183,23 +139,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  backgroundStatusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 30,
-    padding: 10,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
-  },
-  backgroundStatusLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  backgroundStatusText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 5,
-  },
   button: {
     width: "100%",
     padding: 15,
@@ -226,19 +165,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#2196F3",
   },
   settingsButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  detailsButton: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    backgroundColor: "#2196F3",
-    marginBottom: 15,
-  },
-  detailsButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

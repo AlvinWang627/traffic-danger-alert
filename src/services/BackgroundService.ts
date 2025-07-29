@@ -4,7 +4,6 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import { calculateDistance } from "../utils/locationUtils";
-import { BatteryOptimizationService } from "./BatteryOptimizationService";
 import { DangerSpot, DangerSpotService } from "./DangerSpotService";
 
 const BACKGROUND_LOCATION_TASK = "background-location-task";
@@ -24,11 +23,7 @@ export class BackgroundService {
   private isInitialized = false;
   private lastAlertTime = 0;
   private readonly ALERT_INTERVAL = 10000; // 10秒間隔，避免過於頻繁的警報
-  private batteryOptimizationService: BatteryOptimizationService;
-
-  constructor() {
-    this.batteryOptimizationService = BatteryOptimizationService.getInstance();
-  }
+  constructor() {}
 
   static getInstance(): BackgroundService {
     if (!BackgroundService.instance) {
@@ -83,11 +78,6 @@ export class BackgroundService {
           if (locations && locations.length > 0) {
             const location = locations[0];
 
-            // 儲存最後已知位置
-            await this.batteryOptimizationService.saveLastKnownLocation(
-              location
-            );
-
             // 檢查危險路段
             await this.checkDangerSpots(location);
           }
@@ -103,9 +93,6 @@ export class BackgroundService {
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-
-        // 儲存最後已知位置
-        await this.batteryOptimizationService.saveLastKnownLocation(location);
 
         // 檢查危險路段
         await this.checkDangerSpots(location);
@@ -133,40 +120,18 @@ export class BackgroundService {
         return;
       }
 
-      // 獲取電池優化設定
-      const batterySettings =
-        await this.batteryOptimizationService.getSettings();
-
-      // 根據設定選擇位置更新選項
-      let locationOptions: Location.LocationTaskOptions;
-
-      if (batterySettings.enableBatteryOptimization) {
-        // 使用電池優化設定
-        const shouldUseHighAccuracy =
-          await this.batteryOptimizationService.shouldUseHighAccuracy();
-        const optimalInterval =
-          await this.batteryOptimizationService.calculateOptimalUpdateInterval();
-
-        locationOptions = {
-          accuracy: shouldUseHighAccuracy
-            ? Location.Accuracy.High
-            : Location.Accuracy.Balanced,
-          timeInterval: optimalInterval,
-          distanceInterval: batterySettings.distanceThreshold,
-          foregroundService: {
-            notificationTitle: "交通危險警報",
-            notificationBody: shouldUseHighAccuracy
-              ? "正在高精度監控附近的危險路段"
-              : "正在監控附近的危險路段",
-            notificationColor: "#FF6B6B",
-          },
-          showsBackgroundLocationIndicator: true,
-        };
-      } else {
-        // 使用預設高精度設定
-        locationOptions =
-          this.batteryOptimizationService.getHighAccuracyLocationOptions();
-      }
+      // 使用固定的位置更新選項
+      const locationOptions: Location.LocationTaskOptions = {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000, // 固定10秒
+        distanceInterval: 50, // 固定50公尺
+        foregroundService: {
+          notificationTitle: "交通危險警報",
+          notificationBody: "正在監控附近的危險路段",
+          notificationColor: "#FF6B6B",
+        },
+        showsBackgroundLocationIndicator: true,
+      };
 
       await Location.startLocationUpdatesAsync(
         BACKGROUND_LOCATION_TASK,
@@ -196,20 +161,9 @@ export class BackgroundService {
     location: Location.LocationObject
   ): Promise<void> {
     try {
-      // 記錄位置更新統計
-      await this.batteryOptimizationService.recordLocationUpdate();
-
       // 獲取設定
       const alertDistanceStr = await AsyncStorage.getItem("alertDistance");
       const alertDistance = alertDistanceStr ? parseInt(alertDistanceStr) : 200;
-
-      // 檢查是否應該發送通知
-      const shouldSend =
-        await this.batteryOptimizationService.shouldSendNotification();
-      if (!shouldSend) {
-        console.log("根據移動狀態，跳過通知發送");
-        return;
-      }
 
       // 獲取危險路段資料
       const dangerSpotService = DangerSpotService.getInstance();
@@ -301,16 +255,4 @@ export class BackgroundService {
     }
   }
 
-  // 電池優化相關方法
-  async getBatteryOptimizationSettings() {
-    return await this.batteryOptimizationService.getSettings();
-  }
-
-  async updateBatteryOptimizationSettings(settings: any) {
-    await this.batteryOptimizationService.updateSettings(settings);
-  }
-
-  getBatteryOptimizationTips() {
-    return this.batteryOptimizationService.getBatteryOptimizationTips();
-  }
 }
