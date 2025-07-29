@@ -9,14 +9,28 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "此應用需要您的位置來提供即時交通危險警告",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "此應用需要在背景追蹤您的位置以提供即時交通危險警告",
+        "UIBackgroundModes": ["location", "fetch", "background-processing"],
+        "NSUserNotificationsUsageDescription": "此應用需要發送通知來提醒您附近的危險路段"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK"
+      ],
+      "foregroundServiceType": ["location"]
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +46,28 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "此應用需要在背景追蹤您的位置以提供即時交通危險警告",
+          "locationAlwaysPermission": "此應用需要在背景追蹤您的位置以提供即時交通危險警告",
+          "locationWhenInUsePermission": "此應用需要您的位置來提供即時交通危險警告"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#FF6B6B",
+          "sounds": ["./assets/sounds/alert.mp3"]
+        }
+      ],
+      [
+        "expo-background-fetch",
+        {
+          "minimumInterval": 900
         }
       ]
     ],
