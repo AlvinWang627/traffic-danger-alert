@@ -21,7 +21,7 @@ interface UseLocationOptions {
 export const useLocation = ({
   enabled,
   updateInterval = 10000, // 10秒
-  backgroundUpdateInterval = 30000, // 30秒
+  backgroundUpdateInterval = 10000, // 10秒
   accuracy = Location.Accuracy.High,
 }: UseLocationOptions) => {
   const [state, setState] = useState<LocationState>({

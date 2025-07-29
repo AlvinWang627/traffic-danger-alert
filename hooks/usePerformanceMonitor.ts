@@ -84,7 +84,7 @@ export const usePerformanceMonitor = () => {
 
   const getPerformanceStatus = () => {
     if (stats.currentUpdateInterval <= 10000) return "高頻率";
-    if (stats.currentUpdateInterval <= 30000) return "標準";
+    if (stats.currentUpdateInterval <= 15000) return "標準";
     return "節能模式";
   };
 

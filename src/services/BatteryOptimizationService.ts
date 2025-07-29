@@ -19,7 +19,7 @@ export class BatteryOptimizationService {
   private defaultSettings: BatteryOptimizationSettings = {
     enableBatteryOptimization: true,
     foregroundUpdateInterval: 10000, // 10秒
-    backgroundUpdateInterval: 30000, // 30秒
+    backgroundUpdateInterval: 10000, // 10秒
     distanceThreshold: 100, // 100公尺
     enableAdaptiveAccuracy: true,
     enableMotionDetection: true,
@@ -68,7 +68,7 @@ export class BatteryOptimizationService {
   getOptimizedLocationOptions(): Location.LocationTaskOptions {
     return {
       accuracy: Location.Accuracy.Balanced,
-      timeInterval: 30000, // 30秒
+      timeInterval: 10000, // 10秒
       distanceInterval: 100, // 100公尺
       foregroundService: {
         notificationTitle: "交通危險警報",
@@ -197,7 +197,7 @@ export class BatteryOptimizationService {
       return Math.round(baseInterval);
     } catch (error) {
       console.error("計算最佳更新間隔失敗:", error);
-      return 30000; // 預設30秒
+      return 10000; // 預設10秒
     }
   }
 
@@ -288,7 +288,7 @@ export class BatteryOptimizationService {
         totalLocationUpdates: 0,
         averageUpdateInterval: 0,
         batteryOptimizationEnabled: true,
-        currentUpdateInterval: 30000,
+        currentUpdateInterval: 10000,
       };
     }
   }

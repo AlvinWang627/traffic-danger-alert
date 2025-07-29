@@ -21,7 +21,7 @@ export default function PerformanceSettingsScreen() {
   const [settings, setSettings] = useState<BatteryOptimizationSettings>({
     enableBatteryOptimization: true,
     foregroundUpdateInterval: 10000,
-    backgroundUpdateInterval: 30000,
+    backgroundUpdateInterval: 10000,
     distanceThreshold: 100,
     enableAdaptiveAccuracy: true,
     enableMotionDetection: true,

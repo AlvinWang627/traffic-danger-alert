@@ -23,7 +23,7 @@ export class BackgroundService {
   private static instance: BackgroundService;
   private isInitialized = false;
   private lastAlertTime = 0;
-  private readonly ALERT_INTERVAL = 30000; // 30秒間隔，避免過於頻繁的警報
+  private readonly ALERT_INTERVAL = 10000; // 10秒間隔，避免過於頻繁的警報
   private batteryOptimizationService: BatteryOptimizationService;
 
   constructor() {

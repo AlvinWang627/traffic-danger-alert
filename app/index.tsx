@@ -21,7 +21,7 @@ export default function HomeScreen() {
   const { latitude, longitude, errorMsg, loading } = useLocation({
     enabled: isMonitoring,
     updateInterval: 10000, // 10秒
-    backgroundUpdateInterval: 30000, // 30秒
+    backgroundUpdateInterval: 10000, // 10秒
   });
 
   const { nearbySpotsCount } = useAlerts({ enabled: isMonitoring });

@@ -10,7 +10,17 @@ export interface DangerSpot {
 }
 
 export class DangerSpotService {
+  private static instance: DangerSpotService;
   private static DANGER_RADIUS_METERS = 100; // 預設危險半徑為 100 公尺
+
+  private constructor() {}
+
+  static getInstance(): DangerSpotService {
+    if (!DangerSpotService.instance) {
+      DangerSpotService.instance = new DangerSpotService();
+    }
+    return DangerSpotService.instance;
+  }
 
   /**
    * 計算兩點之間的距離（使用 Haversine 公式）
@@ -73,5 +83,31 @@ export class DangerSpotService {
     if (meters > 0) {
       this.DANGER_RADIUS_METERS = meters;
     }
+  }
+
+  /**
+   * 獲取附近的危險路段 (實例方法)
+   */
+  public async getNearbyDangerSpots(
+    latitude: number,
+    longitude: number,
+    radius: number
+  ): Promise<DangerSpot[]> {
+    const nearbySpots: DangerSpot[] = [];
+
+    for (const spot of accidentData) {
+      const distance = DangerSpotService.calculateDistance(
+        latitude,
+        longitude,
+        spot.latitude,
+        spot.longitude
+      );
+
+      if (distance <= radius) {
+        nearbySpots.push(spot);
+      }
+    }
+
+    return nearbySpots;
   }
 }
